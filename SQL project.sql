@@ -93,6 +93,138 @@ ORDER BY
 	milks_per_salary ASC;
 
 
+-- 3. ukol
+
+-- Mato
+
+SELECT
+	category_code,date_from,
+	((SELECT
+		value
+	FROM
+		czechia_price cp2
+	WHERE
+		date_from <= 
+DATE_ADD(cp.date_from, INTERVAL 1 YEAR)
+		AND date_to >= 
+DATE_ADD(cp.date_from, INTERVAL 1 YEAR)
+		AND category_code = cp.category_code
+		AND region_code IS NULL
+	LIMIT 1)/ value)*100-100 AS ratio
+FROM
+	czechia_price cp
+WHERE
+	region_code IS NULL
+AND ((SELECT
+		value
+	FROM
+		czechia_price cp2
+	WHERE
+		date_from <= 
+DATE_ADD (cp.date_from, INTERVAL 1 YEAR)
+		AND date_to >= 
+DATE_ADD(cp.date_from, INTERVAL 1 YEAR)
+		AND category_code = cp.category_code
+		AND region_code IS NULL
+	LIMIT 1)/ value)*100-100 IS NOT NULL
+ORDER BY ratio ASC
+
+-- Lukas 
+
+
+SELECT
+	(cur.value / prev.value)* 100-100 AS ratio,
+	cur.category_code,
+	CONCAT(cur.Y, ' / ', prev.Y),
+	cpc.name
+FROM
+	(
+	SELECT
+		category_code,
+		AVG (value) AS value,
+		YEAR (date_from) AS Y
+	FROM
+		czechia_price cp
+	GROUP BY
+		YEAR (date_from),
+		category_code
+	ORDER BY
+		YEAR (date_from),
+		category_code) AS cur
+JOIN 
+(
+	SELECT
+		category_code,
+		AVG (value) AS value,
+		YEAR (date_from) AS Y
+	FROM
+		czechia_price cp
+	GROUP BY
+		YEAR (date_from),
+		category_code
+	ORDER BY
+		YEAR (date_from),
+		category_code) AS prev 
+ON
+	cur.Y-1 = prev.Y
+	AND cur.category_code = prev.category_code
+JOIN czechia_price_category cpc
+ON
+	cur.category_code = cpc.code 
+
+
+SELECT
+	AVG ((cur.value / prev.value)* 100-100) AS ratio,
+	cur.category_code,
+	cpc.name
+FROM
+	(
+	SELECT
+		category_code,
+		AVG (value) AS value,
+		YEAR (date_from) AS Y
+	FROM
+		czechia_price cp
+	GROUP BY
+		YEAR (date_from),
+		category_code
+	ORDER BY
+		YEAR (date_from),
+		category_code) AS cur
+JOIN 
+(
+	SELECT
+		category_code,
+		AVG (value) AS value,
+		YEAR (date_from) AS Y
+	FROM
+		czechia_price cp
+	GROUP BY
+		YEAR (date_from),
+		category_code
+	ORDER BY
+		YEAR (date_from),
+		category_code) AS prev 
+ON
+	cur.Y-1 = prev.Y
+	AND cur.category_code = prev.category_code
+JOIN czechia_price_category cpc
+ON
+	cur.category_code = cpc.code
+GROUP BY
+	cur.category_code,
+	cpc.name
+ORDER BY
+	ratio ASC 
+	
+
+
+
+
+	
+
+
+
 
 
 
